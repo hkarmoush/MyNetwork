@@ -193,4 +193,39 @@ final class InterceptorTests: XCTestCase {
         XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-api-token")
         XCTAssertTrue(loggedMessages.contains(where: { $0.contains("📡 Sending Request") }), "Expected log message was not found")
     }
+    
+    func testInterceptorManagerExecutesInterceptorsInOrder() {
+        // Given
+        var executionOrder: [String] = []
+        
+        let firstInterceptor = MockInterceptor { executionOrder.append("First") }
+        let secondInterceptor = MockInterceptor { executionOrder.append("Second") }
+        
+        interceptorManager.addInterceptor(firstInterceptor)
+        interceptorManager.addInterceptor(secondInterceptor)
+        
+        var request = URLRequest(url: URL(string: "https://test.com")!)
+        
+        // When
+        interceptorManager.applyInterceptors(to: &request)
+        
+        // Then
+        XCTAssertEqual(executionOrder, ["First", "Second"], "Interceptors did not execute in correct order")
+    }
+    
+    final class MockInterceptor: InterceptorProtocol {
+        private let action: () -> Void
+        
+        init(action: @escaping () -> Void) {
+            self.action = action
+        }
+        
+        func interceptRequest(_ request: inout URLRequest) {
+            action()
+        }
+        
+        func interceptResponse(_ data: Data?, response: URLResponse?, error: Error?) {
+            action()
+        }
+    }
 }
