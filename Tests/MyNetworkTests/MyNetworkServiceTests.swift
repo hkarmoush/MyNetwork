@@ -11,7 +11,6 @@ import XCTest
 @available(iOS 13.0, macOS 10.15, *)
 final class NetworkServiceTests: XCTestCase {
     
-    // Mock Dependencies
     var mockRequestBuilder: MockRequestBuilder!
     var mockResponseParser: MockResponseParser!
     var mockURLSession: MockURLSession!
@@ -108,7 +107,7 @@ final class NetworkServiceTests: XCTestCase {
         // Then
         if case .failure(let error) = result {
             if case .decodingError = error {
-                XCTAssertTrue(true) // Decoding error correctly triggered
+                XCTAssertTrue(true)
             } else {
                 XCTFail("Expected decoding error but received different error")
             }

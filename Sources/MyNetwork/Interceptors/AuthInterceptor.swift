@@ -21,9 +21,7 @@ final class AuthInterceptor: InterceptorProtocol {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
     
-    func interceptResponse(_ data: Data?, response: URLResponse?, error: Error?) {
-        // No action needed for response interception
-    }
+    func interceptResponse(_ data: Data?, response: URLResponse?, error: Error?) {}
 }
 
 // let authInterceptor = AuthInterceptor { "your-api-token" }

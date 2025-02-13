@@ -17,12 +17,9 @@ final class RetryInterceptor: InterceptorProtocol {
         self.maxRetryCount = maxRetryCount
     }
     
-    func interceptRequest(_ request: inout URLRequest) {
-        // No modifications to request needed
-    }
+    func interceptRequest(_ request: inout URLRequest) {}
     
     func interceptResponse(_ data: Data?, response: URLResponse?, error: Error?) {
-        // ✅ Remove retry logic, since `NetworkService` handles it
         if let error = error {
             print("❌ Request failed, no retrying in interceptor: \(error.localizedDescription)")
         }
