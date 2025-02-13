@@ -96,4 +96,16 @@ final class InterceptorTests: XCTestCase {
         XCTAssertTrue(loggedMessages.contains(where: { $0.contains("📩 Response from") }),
                       "Expected log message for response was not found")
     }
+    
+    func testAuthInterceptorDoesNotAddAuthorizationHeaderWhenTokenIsNil() {
+        // Given
+        let authInterceptor = AuthInterceptor { nil }
+        var request = URLRequest(url: URL(string: "https://test.com")!)
+        
+        // When
+        authInterceptor.interceptRequest(&request)
+        
+        // Then
+        XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"), "Authorization header should not be added when token is nil")
+    }
 }

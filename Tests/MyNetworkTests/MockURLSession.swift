@@ -18,12 +18,10 @@ final class MockURLSession: URLSessionProtocol {
     func data(for request: URLRequest) async throws -> (Data, URLResponse) {
         requestCount += 1
         
-        // Simulate transient failure for the first few attempts
         if requestCount <= 3, let error = mockError {
             throw error
         }
         
-        // Ensure a valid response is available
         guard let response = mockResponse else {
             throw NSError(domain: "MockSession", code: 0, userInfo: nil)
         }
