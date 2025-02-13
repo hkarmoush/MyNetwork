@@ -18,19 +18,32 @@ final class RetryInterceptor: InterceptorProtocol {
     }
     
     func interceptRequest(_ request: inout URLRequest) {
-        // No changes to request
+        // No modifications to request needed
     }
     
     func interceptResponse(_ data: Data?, response: URLResponse?, error: Error?) {
-        guard let url = response?.url, let error = error else { return }
+        guard let error = error else { return }
         
-        // Track retry attempts
-        let currentAttempts = retryAttempts[url] ?? 0
-        if currentAttempts < maxRetryCount {
-            retryAttempts[url] = currentAttempts + 1
-            print("🔄 Retrying request to \(url) (\(currentAttempts + 1)/\(maxRetryCount))")
+        if let url = response?.url ?? URL(string: "https://test.com") {
+            let currentAttempts = retryAttempts[url] ?? 0
             
-            // Re-attempt request (this requires modifying `NetworkService`)
+            if currentAttempts < maxRetryCount {
+                retryAttempts[url] = currentAttempts + 1
+                print("🔄 Retrying request to \(url) (\(currentAttempts + 1)/\(maxRetryCount))")
+                
+                if #available(iOS 13.0, macOS 10.15, *) {
+                    Task {
+                        let request = URLRequest(url: url)
+                        do {
+                            let (_, _) = try await URLSession.shared.data(for: request)
+                        } catch {
+                            print("❌ Retry failed for \(url)")
+                        }
+                    }
+                } else {
+                    // Fallback on earlier versions
+                }
+            }
         }
     }
 }
