@@ -50,7 +50,6 @@ final class InterceptorTests: XCTestCase {
     
     func testRetryInterceptorRetriesRequestOnFailure() async {
         // Given
-        let retryInterceptor = RetryInterceptor(maxRetryCount: 3)
         mockURLSession.mockError = NSError(domain: NSURLErrorDomain, code: NSURLErrorTimedOut, userInfo: nil)
         mockURLSession.mockResponse = HTTPURLResponse(url: URL(string: "https://test.com")!,
                                                       statusCode: 200,
@@ -59,13 +58,12 @@ final class InterceptorTests: XCTestCase {
         
         let request = NetworkRequest(endpoint: "https://test.com", method: .get)
         
-        interceptorManager.addInterceptor(retryInterceptor)
-        
         let networkService = NetworkService(
             requestBuilder: mockRequestBuilder,
             responseParser: mockResponseParser,
             session: mockURLSession,
-            interceptorManager: interceptorManager
+            interceptorManager: interceptorManager,
+            maxRetryCount: 3 // Ensure we test exactly 3 retries
         )
         
         // When
