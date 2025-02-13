@@ -14,7 +14,6 @@ protocol ResponseParserProtocol {
 
 /// Concrete implementation of response parser
 final class ResponseParser: ResponseParserProtocol {
-    
     func parseResponse<T: Decodable>(_ data: Data, response: URLResponse) -> Result<T, APIError> {
         guard let httpResponse = response as? HTTPURLResponse else {
             return .failure(.unknown)
@@ -23,6 +22,10 @@ final class ResponseParser: ResponseParserProtocol {
         switch httpResponse.statusCode {
         case 200...299:
             do {
+                guard !data.isEmpty else {
+                    return .failure(.decodingError(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Empty response data"])))
+                }
+                
                 let decodedObject = try JSONDecoder().decode(T.self, from: data)
                 return .success(decodedObject)
             } catch {
