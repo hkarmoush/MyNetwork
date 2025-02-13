@@ -171,4 +171,26 @@ final class InterceptorTests: XCTestCase {
         XCTAssertTrue(loggedMessages.contains(where: { $0.contains("❌ Request failed with error: Test Error") }),
                       "Expected error log message was not found")
     }
+    
+    func testInterceptorManagerAppliesAllInterceptors() {
+        // Given
+        var loggedMessages: [String] = []
+        
+        let loggingInterceptor = LoggingInterceptor { message in
+            loggedMessages.append(message)
+        }
+        let authInterceptor = AuthInterceptor { "test-api-token" }
+        
+        interceptorManager.addInterceptor(loggingInterceptor)
+        interceptorManager.addInterceptor(authInterceptor)
+        
+        var request = URLRequest(url: URL(string: "https://test.com")!)
+        
+        // When
+        interceptorManager.applyInterceptors(to: &request)
+        
+        // Then
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-api-token")
+        XCTAssertTrue(loggedMessages.contains(where: { $0.contains("📡 Sending Request") }), "Expected log message was not found")
+    }
 }
