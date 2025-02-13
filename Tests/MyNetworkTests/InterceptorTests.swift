@@ -154,4 +154,21 @@ final class InterceptorTests: XCTestCase {
         // Then
         XCTAssertEqual(mockURLSession.requestCount, 3, "Expected 3 requests (1 initial + 2 retries), but got \(mockURLSession.requestCount)")
     }
+    
+    func testLoggingInterceptorLogsErrors() {
+        // Given
+        var loggedMessages: [String] = []
+        let loggingInterceptor = LoggingInterceptor { message in
+            loggedMessages.append(message)
+        }
+        
+        let networkError = NSError(domain: "TestErrorDomain", code: -1, userInfo: [NSLocalizedDescriptionKey: "Test Error"])
+        
+        // When
+        loggingInterceptor.interceptResponse(nil, response: nil, error: networkError)
+        
+        // Then
+        XCTAssertTrue(loggedMessages.contains(where: { $0.contains("❌ Request failed with error: Test Error") }),
+                      "Expected error log message was not found")
+    }
 }
