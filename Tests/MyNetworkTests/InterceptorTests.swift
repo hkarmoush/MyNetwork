@@ -133,4 +133,25 @@ final class InterceptorTests: XCTestCase {
         // Then
         XCTAssertEqual(mockURLSession.requestCount, 1, "Expected 1 request (no retries), but got \(mockURLSession.requestCount)")
     }
+    
+    func testRetryInterceptorStopsAfterMaxRetries() async {
+        // Given
+        mockURLSession.mockError = NSError(domain: NSURLErrorDomain, code: NSURLErrorTimedOut, userInfo: nil)
+        
+        let request = NetworkRequest(endpoint: "https://test.com", method: .get)
+        
+        let networkService = NetworkService(
+            requestBuilder: mockRequestBuilder,
+            responseParser: mockResponseParser,
+            session: mockURLSession,
+            interceptorManager: interceptorManager,
+            maxRetryCount: 2 // Only allow 2 retries
+        )
+        
+        // When
+        let _: Result<User, APIError> = await networkService.request(request)
+        
+        // Then
+        XCTAssertEqual(mockURLSession.requestCount, 3, "Expected 3 requests (1 initial + 2 retries), but got \(mockURLSession.requestCount)")
+    }
 }
