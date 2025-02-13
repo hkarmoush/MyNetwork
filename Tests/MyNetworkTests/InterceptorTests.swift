@@ -108,4 +108,29 @@ final class InterceptorTests: XCTestCase {
         // Then
         XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"), "Authorization header should not be added when token is nil")
     }
+    
+    func testRetryInterceptorDoesNotRetryOnClientError() async {
+        // Given
+        mockURLSession.mockError = NSError(domain: NSURLErrorDomain, code: NSURLErrorCancelled, userInfo: nil) // Client error
+        mockURLSession.mockResponse = HTTPURLResponse(url: URL(string: "https://test.com")!,
+                                                      statusCode: 400, // Bad request
+                                                      httpVersion: nil,
+                                                      headerFields: nil)
+        
+        let request = NetworkRequest(endpoint: "https://test.com", method: .get)
+        
+        let networkService = NetworkService(
+            requestBuilder: mockRequestBuilder,
+            responseParser: mockResponseParser,
+            session: mockURLSession,
+            interceptorManager: interceptorManager,
+            maxRetryCount: 3
+        )
+        
+        // When
+        let _: Result<User, APIError> = await networkService.request(request)
+        
+        // Then
+        XCTAssertEqual(mockURLSession.requestCount, 1, "Expected 1 request (no retries), but got \(mockURLSession.requestCount)")
+    }
 }
