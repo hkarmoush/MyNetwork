@@ -20,26 +20,35 @@ final class NetworkService: NetworkServiceProtocol {
     private let requestBuilder: RequestBuilderProtocol
     private let responseParser: ResponseParserProtocol
     private let session: URLSessionProtocol
+    private let interceptorManager: InterceptorManager
     
     init(
         requestBuilder: RequestBuilderProtocol = RequestBuilder(),
         responseParser: ResponseParserProtocol = ResponseParser(),
-        session: URLSessionProtocol
+        session: URLSessionProtocol,
+        interceptorManager: InterceptorManager = InterceptorManager()
     ) {
         self.requestBuilder = requestBuilder
         self.responseParser = responseParser
         self.session = session
+        self.interceptorManager = interceptorManager
     }
     
     func request<T: Decodable>(_ request: NetworkRequest) async -> Result<T, APIError> {
-        guard let urlRequest = requestBuilder.buildRequest(from: request) else {
+        guard var urlRequest = requestBuilder.buildRequest(from: request) else {
             return .failure(.unknown)
         }
         
+        interceptorManager.applyInterceptors(to: &urlRequest)
+        
         do {
             let (data, response) = try await session.data(for: urlRequest)
+            
+            interceptorManager.notifyInterceptors(data: data, response: response, error: nil)
+            
             return responseParser.parseResponse(data, response: response)
         } catch {
+            interceptorManager.notifyInterceptors(data: nil, response: nil, error: error)
             return .failure(.networkFailure(error))
         }
     }
